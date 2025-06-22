@@ -18,6 +18,7 @@ func main() {
 
 	app.Post("/user", createUser)
 	app.Get("/user/:id", getUserById)
+	app.Delete("/user/:id", deleteUserById)
 
 	app.Listen(":3000")
 }
@@ -51,4 +52,21 @@ func getUserById(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(user)
+}
+
+func deleteUserById(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	_, exists := users[id]
+	if !exists {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Пользователь не найден",
+		})
+	}
+
+	delete(users, id)
+
+	return c.JSON(fiber.Map{
+		"message": "Пользователь удалён",
+	})
 }
