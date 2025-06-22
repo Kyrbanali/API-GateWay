@@ -19,6 +19,7 @@ func main() {
 	app.Post("/user", createUser)
 	app.Get("/user/:id", getUserById)
 	app.Delete("/user/:id", deleteUserById)
+	app.Put("/user", updateUser)
 
 	app.Listen(":3000")
 }
@@ -69,4 +70,28 @@ func deleteUserById(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "Пользователь удалён",
 	})
+}
+
+func updateUser(c *fiber.Ctx) error {
+	var updatedUser User
+
+	if err := c.BodyParser(&updatedUser); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "не удалось распарсить Json",
+		})
+	}
+
+	_, esists := users[updatedUser.ID]
+	if !esists {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Пользователь не найден",
+		})
+	}
+
+	users[updatedUser.ID] = updatedUser
+
+	return c.JSON(fiber.Map{
+		"id": updatedUser.ID,
+	})
+
 }
