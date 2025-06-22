@@ -17,6 +17,7 @@ func main() {
 	app := fiber.New()
 
 	app.Post("/user", createUser)
+	app.Get("/user/:id", getUserById)
 
 	app.Listen(":3000")
 }
@@ -37,4 +38,17 @@ func createUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"id": user.ID,
 	})
+}
+
+func getUserById(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	user, exists := users[id]
+	if !exists {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Пользователь не найден",
+		})
+	}
+
+	return c.JSON(user)
 }
