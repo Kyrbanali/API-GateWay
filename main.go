@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log/slog"
+	"os"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -21,7 +24,10 @@ func main() {
 	app.Delete("/user/:id", deleteUserById)
 	app.Put("/user", updateUser)
 
-	app.Listen(":3000")
+	if err := app.Listen(":3000"); err != nil {
+		slog.Error("app run", slog.Any("error", err))
+		os.Exit(1)
+	}
 }
 
 func createUser(c *fiber.Ctx) error {
