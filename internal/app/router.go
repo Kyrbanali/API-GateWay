@@ -45,6 +45,12 @@ func createUser(c *fiber.Ctx) error {
 func getUserById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "некорректный uuid",
+		})
+	}
+
 	user, exists := users[id]
 	if !exists {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -57,6 +63,12 @@ func getUserById(c *fiber.Ctx) error {
 
 func deleteUserById(c *fiber.Ctx) error {
 	id := c.Params("id")
+
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "некорректный uuid",
+		})
+	}
 
 	_, exists := users[id]
 	if !exists {
