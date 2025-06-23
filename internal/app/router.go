@@ -29,7 +29,7 @@ func createUser(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&user); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "не удалось распарсить json",
+			"error": "failed to parse json",
 		})
 	}
 
@@ -47,14 +47,14 @@ func getUserById(c *fiber.Ctx) error {
 
 	if _, err := uuid.Parse(id); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "некорректный uuid",
+			"error": "invalid uuid",
 		})
 	}
 
 	user, exists := users[id]
 	if !exists {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Пользователь не найден",
+			"error": "user not found",
 		})
 	}
 
@@ -66,21 +66,21 @@ func deleteUserById(c *fiber.Ctx) error {
 
 	if _, err := uuid.Parse(id); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "некорректный uuid",
+			"error": "invalid uuid",
 		})
 	}
 
 	_, exists := users[id]
 	if !exists {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Пользователь не найден",
+			"error": "user not found",
 		})
 	}
 
 	delete(users, id)
 
 	return c.JSON(fiber.Map{
-		"message": "Пользователь удалён",
+		"message": "user deleted",
 	})
 }
 
@@ -89,14 +89,14 @@ func updateUser(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&updatedUser); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "не удалось распарсить Json",
+			"error": "failed to parse Json",
 		})
 	}
 
 	_, esists := users[updatedUser.ID]
 	if !esists {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Пользователь не найден",
+			"error": "user not found",
 		})
 	}
 
