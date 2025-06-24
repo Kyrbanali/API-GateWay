@@ -13,7 +13,21 @@ func InsertUser(ctx context.Context, user models.User) error {
 	return err
 }
 
-// func GetAllUsers(ctx context.Context)
+func GetAllUsers(ctx context.Context) ([]models.User, error) {
+	rows, err := Conn.Query(ctx, "SELECT id, name, age FROM users")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		user := models.User{}
+		rows.Scan(&user.ID, &user.Name, &user.Age)
+		users = append(users, user)
+	}
+	return users, nil
+}
 
 func GetUserByID(ctx context.Context, id string) (models.User, error) {
 	var user models.User

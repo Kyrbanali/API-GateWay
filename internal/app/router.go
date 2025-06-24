@@ -15,6 +15,7 @@ func GetRouter() *fiber.App {
 
 	app.Post("/user", createUser)
 	app.Get("/user/:id", getUserById)
+	app.Get("/users", getAllUsers)
 	app.Delete("/user/:id", deleteUserById)
 	app.Put("/user", updateUser)
 
@@ -65,6 +66,17 @@ func getUserById(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(user)
+}
+
+func getAllUsers(c *fiber.Ctx) error {
+	users, err := storage.GetAllUsers(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(users)
 }
 
 func deleteUserById(c *fiber.Ctx) error {
