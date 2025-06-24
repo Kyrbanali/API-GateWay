@@ -13,8 +13,8 @@ func GetRouter() *fiber.App {
 
 	app.Post("/user", createUser)
 	app.Get("/user/:id", getUserById)
-	// app.Delete("/user/:id", deleteUserById)
-	// app.Put("/user", updateUser)
+	app.Delete("/user/:id", deleteUserById)
+	app.Put("/user", updateUser)
 
 	return app
 }
@@ -65,49 +65,55 @@ func getUserById(c *fiber.Ctx) error {
 	return c.JSON(user)
 }
 
-// func deleteUserById(c *fiber.Ctx) error {
-// 	id := c.Params("id")
+func deleteUserById(c *fiber.Ctx) error {
+	id := c.Params("id")
 
-// 	if _, err := uuid.Parse(id); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "invalid uuid",
-// 		})
-// 	}
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid uuid",
+		})
+	}
 
-// 	_, exists := users[id]
-// 	if !exists {
-// 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-// 			"error": "user not found",
-// 		})
-// 	}
+	_, err := storage.GetUserById(c.Context(), id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+	}
 
-// 	delete(users, id)
+	if err := storage.DeleteUser(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "error deleting user",
+		})
+	}
 
-// 	return c.JSON(fiber.Map{
-// 		"message": "user deleted",
-// 	})
-// }
+	return c.JSON(fiber.Map{
+		"message": "user deleted",
+	})
+}
 
-// func updateUser(c *fiber.Ctx) error {
-// 	var updatedUser User
+func updateUser(c *fiber.Ctx) error {
+	var updatedUser models.User
 
-// 	if err := c.BodyParser(&updatedUser); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "failed to parse Json",
-// 		})
-// 	}
+	if err := c.BodyParser(&updatedUser); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "failed to parse Json",
+		})
+	}
 
-// 	_, esists := users[updatedUser.ID]
-// 	if !esists {
-// 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-// 			"error": "user not found",
-// 		})
-// 	}
+	_, esists := users[updatedUser.ID]
+	if !esists {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "user not found",
+		})
+	}
 
-// 	users[updatedUser.ID] = updatedUser
+	users[updatedUser.ID] = updatedUser
 
-// 	return c.JSON(fiber.Map{
-// 		"id": updatedUser.ID,
-// 	})
+	return c.JSON(fiber.Map{
+		"id": updatedUser.ID,
+	})
 
-// }
+}
