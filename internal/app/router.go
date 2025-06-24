@@ -1,6 +1,8 @@
 package app
 
 import (
+	"errors"
+
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/storage"
 	"github.com/gofiber/fiber/v2"
@@ -50,7 +52,7 @@ func getUserById(c *fiber.Ctx) error {
 		})
 	}
 
-	user, err := storage.GetUserById(c.Context(), id)
+	user, err := storage.GetUserByID(c.Context(), id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -74,9 +76,9 @@ func deleteUserById(c *fiber.Ctx) error {
 		})
 	}
 
-	_, err := storage.GetUserById(c.Context(), id)
-	if err != nil {
-		if err == pgx.ErrNoRows {
+	_, exists := storage.GetUserByID(c.Context(), id)
+	if exists != nil {
+		if exists == pgx.ErrNoRows {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "user not found",
 			})
@@ -103,14 +105,31 @@ func updateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	_, esists := users[updatedUser.ID]
-	if !esists {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "user not found",
+	if _, err := uuid.Parse(updatedUser.ID); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid UUID",
 		})
 	}
 
-	users[updatedUser.ID] = updatedUser
+	_, err := storage.GetUserByID(c.Context(), updatedUser.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "error checking user existence",
+			"details": err.Error(),
+		})
+	}
+
+	if err := storage.UpdateUser(c.Context(), updatedUser); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "error updating user",
+			"details": err.Error(),
+		})
+	}
 
 	return c.JSON(fiber.Map{
 		"id": updatedUser.ID,

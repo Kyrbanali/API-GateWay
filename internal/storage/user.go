@@ -13,7 +13,9 @@ func InsertUser(ctx context.Context, user models.User) error {
 	return err
 }
 
-func GetUserById(ctx context.Context, id string) (models.User, error) {
+// func GetAllUsers(ctx context.Context)
+
+func GetUserByID(ctx context.Context, id string) (models.User, error) {
 	var user models.User
 	err := Conn.QueryRow(ctx, `
 		SELECT id, name, age FROM users WHERE id = $1
@@ -23,7 +25,7 @@ func GetUserById(ctx context.Context, id string) (models.User, error) {
 
 func UpdateUser(ctx context.Context, user models.User) error {
 	_, err := Conn.Exec(ctx, `
-		UPDATE user SET name = $1, age = $2 WHERE id = $3
+		UPDATE users SET name = $1, age = $2 WHERE id = $3
 	`, user.Name, user.Age, user.ID)
 	return err
 }
