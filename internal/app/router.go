@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 
+	"github.com/Kyrbanali/API-GateWay/internal/handler"
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/storage"
 	"github.com/gofiber/fiber/v2"
@@ -10,38 +11,16 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func GetRouter() *fiber.App {
+func GetRouter(h *handler.Handle) *fiber.App {
 	app := fiber.New()
 
-	app.Post("/user", createUser)
+	app.Post("/user", h.CreateUser)
 	app.Get("/user/:id", getUserById)
 	app.Get("/users", getAllUsers)
 	app.Delete("/user/:id", deleteUserById)
 	app.Put("/user", updateUser)
 
 	return app
-}
-
-func createUser(c *fiber.Ctx) error {
-	var user models.User
-
-	if err := c.BodyParser(&user); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "failed to parse json",
-		})
-	}
-
-	user.ID = uuid.NewString()
-
-	if err := storage.InsertUser(c.Context(), user); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "error inserting into DB",
-		})
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"id": user.ID,
-	})
 }
 
 func getUserById(c *fiber.Ctx) error {

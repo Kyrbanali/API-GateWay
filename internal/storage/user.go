@@ -6,13 +6,6 @@ import (
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 )
 
-func InsertUser(ctx context.Context, user models.User) error {
-	_, err := Conn.Exec(ctx, `
-		INSERT INTO USERS (id, name, age) VALUES ($1, $2, $3)
-	`, user.ID, user.Name, user.Age)
-	return err
-}
-
 func GetAllUsers(ctx context.Context) ([]models.User, error) {
 	rows, err := Conn.Query(ctx, "SELECT id, name, age FROM users")
 	if err != nil {
