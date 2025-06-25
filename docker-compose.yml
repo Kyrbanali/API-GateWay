@@ -1,9 +1,6 @@
-version: '3'
-
 services:
   postgres:
     image: postgres:15
-    container_name: pg
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -15,7 +12,6 @@ services:
 
   api:
     build: .
-    container_name: api
     depends_on:
       - postgres
     ports:
