@@ -85,8 +85,34 @@ func (h *Handle) GetAllUsers(c *fiber.Ctx) error {
 	return c.JSON(users)
 }
 
-func DeleteUserByID() {
+func (h *Handle) DeleteUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
 
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid uuid",
+		})
+	}
+
+	res, err := h.conn.Exec(c.Context(), `
+		DELETE FROM users WHERE id = $1
+	`, id)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if res.RowsAffected() == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "user not found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "user deleted",
+	})
 }
 
 func UpdateUser() {
