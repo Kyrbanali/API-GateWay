@@ -67,8 +67,22 @@ func (h *Handle) GetUserByID(c *fiber.Ctx) error {
 	return c.JSON(user)
 }
 
-func GetAllUsers() {
+func (h *Handle) GetAllUsers(c *fiber.Ctx) error {
+	rows, err := h.conn.Query(c.Context(), "SELECT id, name, age FROM users")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	defer rows.Close()
 
+	var users []models.User
+	for rows.Next() {
+		user := models.User{}
+		rows.Scan(&user.ID, &user.Name, &user.Age)
+		users = append(users, user)
+	}
+	return c.JSON(users)
 }
 
 func DeleteUserByID() {
