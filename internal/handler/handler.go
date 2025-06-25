@@ -115,6 +115,38 @@ func (h *Handle) DeleteUserByID(c *fiber.Ctx) error {
 	})
 }
 
-func UpdateUser() {
+func (h *Handle) UpdateUser(c *fiber.Ctx) error {
+	var user models.User
 
+	if err := c.BodyParser(&user); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "failed to parse Json",
+		})
+	}
+
+	if _, err := uuid.Parse(user.ID); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid UUID",
+		})
+	}
+
+	res, err := h.conn.Exec(c.Context(), `
+		UPDATE users SET name = $1, age = $2 WHERE id = $3
+	`, user.Name, user.Age, user.ID)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if res.RowsAffected() == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "user not found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"id": user.ID,
+	})
 }
