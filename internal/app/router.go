@@ -15,36 +15,12 @@ func GetRouter(h *handler.Handle) *fiber.App {
 	app := fiber.New()
 
 	app.Post("/user", h.CreateUser)
-	app.Get("/user/:id", getUserById)
+	app.Get("/user/:id", h.GetUserByID)
 	app.Get("/users", getAllUsers)
 	app.Delete("/user/:id", deleteUserById)
 	app.Put("/user", updateUser)
 
 	return app
-}
-
-func getUserById(c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	if _, err := uuid.Parse(id); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid uuid",
-		})
-	}
-
-	user, err := storage.GetUserByID(c.Context(), id)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "user not found",
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "error getting user",
-		})
-	}
-
-	return c.JSON(user)
 }
 
 func getAllUsers(c *fiber.Ctx) error {

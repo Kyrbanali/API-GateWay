@@ -43,3 +43,38 @@ func (h *Handle) CreateUser(c *fiber.Ctx) error {
 		"id": user.ID,
 	})
 }
+
+func (h *Handle) GetUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid uuid",
+		})
+	}
+
+	row := h.conn.QueryRow(c.Context(), `
+		SELECT id, name, age FROM users WHERE id = $1
+	`, id)
+
+	var user models.User
+	if err := row.Scan(&user.ID, &user.Name, &user.Age); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "user not found",
+		})
+	}
+
+	return c.JSON(user)
+}
+
+func GetAllUsers() {
+
+}
+
+func DeleteUserByID() {
+
+}
+
+func UpdateUser() {
+
+}

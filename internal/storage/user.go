@@ -22,14 +22,6 @@ func GetAllUsers(ctx context.Context) ([]models.User, error) {
 	return users, nil
 }
 
-func GetUserByID(ctx context.Context, id string) (models.User, error) {
-	var user models.User
-	err := Conn.QueryRow(ctx, `
-		SELECT id, name, age FROM users WHERE id = $1
-	`, id).Scan(&user.ID, &user.Name, &user.Age)
-	return user, err
-}
-
 func UpdateUser(ctx context.Context, user models.User) error {
 	_, err := Conn.Exec(ctx, `
 		UPDATE users SET name = $1, age = $2 WHERE id = $3
