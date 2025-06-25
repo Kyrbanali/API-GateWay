@@ -10,7 +10,8 @@ import (
 )
 
 func main() {
-	db, err := storage.GetConnect()
+	dsn := "postgres://postgres:postgres@postgres:5432/postgres"
+	db, err := storage.GetConnect(dsn)
 	if err != nil {
 		slog.Error("failed to connect to DB", slog.Any("error", err))
 		os.Exit(1)
