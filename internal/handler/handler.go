@@ -6,6 +6,7 @@ import (
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -59,8 +60,14 @@ func (h *Handle) GetUserByID(c *fiber.Ctx) error {
 
 	var user models.User
 	if err := row.Scan(&user.ID, &user.Name, &user.Age); err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "user not found",
+		if err == pgx.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "error querying user",
+			"details": err.Error(),
 		})
 	}
 
