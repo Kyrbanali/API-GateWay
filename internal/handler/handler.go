@@ -18,12 +18,18 @@ func New(uc *usecase.UseCase) *Handle {
 }
 
 func (h *Handle) CreateUser(c *fiber.Ctx) error {
-	var user models.User
+	var req models.CreateUserRequest
 
-	if err := c.BodyParser(&user); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "failed to parse json",
 		})
+	}
+
+	user := models.UserDTO{
+		ID:   uuid.NewString(),
+		Name: req.Name,
+		Age:  req.Age,
 	}
 
 	id, err := h.uc.CreateUser(c.Context(), user)
@@ -33,9 +39,7 @@ func (h *Handle) CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"id": id,
-	})
+	return c.Status(fiber.StatusCreated).JSON(models.CreateUserResponse{ID: id})
 }
 
 func (h *Handle) GetUserByID(c *fiber.Ctx) error {
@@ -104,18 +108,24 @@ func (h *Handle) DeleteUserByID(c *fiber.Ctx) error {
 }
 
 func (h *Handle) UpdateUser(c *fiber.Ctx) error {
-	var user models.User
+	var req models.UpdateUserRequest
 
-	if err := c.BodyParser(&user); err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "failed to parse Json",
 		})
 	}
 
-	if _, err := uuid.Parse(user.ID); err != nil {
+	if _, err := uuid.Parse(req.ID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid UUID",
 		})
+	}
+
+	user := models.UserDTO{
+		ID:   req.ID,
+		Name: req.Name,
+		Age:  req.Age,
 	}
 
 	err := h.uc.UpdateUser(c.Context(), user)
