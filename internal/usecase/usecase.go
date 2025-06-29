@@ -18,3 +18,7 @@ func New(userRepo *repository.UserRepo) *UseCase {
 func (u *UseCase) CreateUser(ctx context.Context, user models.User) (string, error) {
 	return u.userRepo.CreateUser(ctx, user)
 }
+
+func (u *UseCase) GetUserByID(ctx context.Context, id string) (models.User, error) {
+	return u.userRepo.GetUserByID(ctx, id)
+}

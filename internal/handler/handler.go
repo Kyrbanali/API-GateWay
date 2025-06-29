@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"strings"
+
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/usecase"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type Handle struct {
@@ -35,34 +38,30 @@ func (h *Handle) CreateUser(c *fiber.Ctx) error {
 	})
 }
 
-// func (h *Handle) GetUserByID(c *fiber.Ctx) error {
-// 	id := c.Params("id")
+func (h *Handle) GetUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
 
-// 	if _, err := uuid.Parse(id); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "invalid uuid",
-// 		})
-// 	}
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid uuid",
+		})
+	}
 
-// 	row := h.conn.QueryRow(c.Context(), `
-// 		SELECT id, name, age FROM users WHERE id = $1
-// 	`, id)
+	user, err := h.uc.GetUserByID(c.Context(), id)
+	if err != nil {
+		if err.Error() == "no rows in result set" || strings.Contains(err.Error(), "no rows") {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "error querying user",
+			"details": err.Error(),
+		})
+	}
 
-// 	var user models.User
-// 	if err := row.Scan(&user.ID, &user.Name, &user.Age); err != nil {
-// 		if err == pgx.ErrNoRows {
-// 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-// 				"error": "user not found",
-// 			})
-// 		}
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 			"error":   "error querying user",
-// 			"details": err.Error(),
-// 		})
-// 	}
-
-// 	return c.JSON(user)
-// }
+	return c.JSON(user)
+}
 
 // func (h *Handle) GetAllUsers(c *fiber.Ctx) error {
 // 	rows, err := h.conn.Query(c.Context(), "SELECT id, name, age FROM users")

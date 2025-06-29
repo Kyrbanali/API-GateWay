@@ -29,3 +29,15 @@ func (r *UserRepo) CreateUser(ctx context.Context, user models.User) (string, er
 
 	return user.ID, nil
 }
+
+func (r *UserRepo) GetUserByID(ctx context.Context, id string) (models.User, error) {
+	var user models.User
+
+	row := r.conn.QueryRow(ctx, `
+	    SELECT id, name, age FROM users WHERE id = $1
+	`, id)
+
+	err := row.Scan(&user.ID, &user.Name, &user.Age)
+
+	return user, err
+}
