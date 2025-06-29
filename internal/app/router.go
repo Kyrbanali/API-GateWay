@@ -11,8 +11,8 @@ func GetRouter(h *handler.Handle) *fiber.App {
 	app.Post("/user", h.CreateUser)
 	app.Get("/user/:id", h.GetUserByID)
 	app.Get("/users", h.GetAllUsers)
-	// app.Delete("/user/:id", h.DeleteUserByID)
-	// app.Put("/user", h.UpdateUser)
+	app.Delete("/user/:id", h.DeleteUserByID)
+	app.Put("/user", h.UpdateUser)
 
 	return app
 }

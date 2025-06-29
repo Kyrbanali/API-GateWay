@@ -75,68 +75,61 @@ func (h *Handle) GetAllUsers(c *fiber.Ctx) error {
 	return c.JSON(users)
 }
 
-// func (h *Handle) DeleteUserByID(c *fiber.Ctx) error {
-// 	id := c.Params("id")
+func (h *Handle) DeleteUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
 
-// 	if _, err := uuid.Parse(id); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "invalid uuid",
-// 		})
-// 	}
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid uuid",
+		})
+	}
 
-// 	res, err := h.conn.Exec(c.Context(), `
-// 		DELETE FROM users WHERE id = $1
-// 	`, id)
+	err := h.uc.DeleteUserByID(c.Context(), id)
 
-// 	if err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
+	if err != nil {
+		if err.Error() == "no rows in result set" || strings.Contains(err.Error(), "no rows") {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
 
-// 	if res.RowsAffected() == 0 {
-// 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-// 			"error": "user not found",
-// 		})
-// 	}
+	return c.JSON(fiber.Map{
+		"message": "user deleted",
+	})
+}
 
-// 	return c.JSON(fiber.Map{
-// 		"message": "user deleted",
-// 	})
-// }
+func (h *Handle) UpdateUser(c *fiber.Ctx) error {
+	var user models.User
 
-// func (h *Handle) UpdateUser(c *fiber.Ctx) error {
-// 	var user models.User
+	if err := c.BodyParser(&user); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "failed to parse Json",
+		})
+	}
 
-// 	if err := c.BodyParser(&user); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "failed to parse Json",
-// 		})
-// 	}
+	if _, err := uuid.Parse(user.ID); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid UUID",
+		})
+	}
 
-// 	if _, err := uuid.Parse(user.ID); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "invalid UUID",
-// 		})
-// 	}
+	id, err := h.uc.UpdateUser(c.Context(), user)
+	if err != nil {
+		if err.Error() == "no rows in result set" || strings.Contains(err.Error(), "no rows") {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
 
-// 	res, err := h.conn.Exec(c.Context(), `
-// 		UPDATE users SET name = $1, age = $2 WHERE id = $3
-// 	`, user.Name, user.Age, user.ID)
-
-// 	if err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
-
-// 	if res.RowsAffected() == 0 {
-// 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-// 			"error": "user not found",
-// 		})
-// 	}
-
-// 	return c.JSON(fiber.Map{
-// 		"id": user.ID,
-// 	})
-// }
+	return c.JSON(fiber.Map{
+		"id": id,
+	})
+}

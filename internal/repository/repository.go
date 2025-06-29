@@ -63,3 +63,25 @@ func (r *UserRepo) GetAllUsers(ctx context.Context) ([]models.User, error) {
 
 	return users, nil
 }
+
+func (r *UserRepo) DeleteUserByID(ctx context.Context, id string) error {
+	_, err := r.conn.Exec(ctx, `
+		DELETE FROM users WHERE id = $1
+	`, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *UserRepo) UpdateUser(ctx context.Context, user models.User) (string, error) {
+	_, err := r.conn.Exec(ctx, `
+		UPDATE users SET name = $1, age = $2 WHERE id = $3
+	`, user.Name, user.Age, user.ID)
+	if err != nil {
+		return "", err
+	}
+
+	return user.ID, nil
+}
