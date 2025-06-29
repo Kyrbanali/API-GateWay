@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/google/uuid"
@@ -65,23 +66,31 @@ func (r *UserRepo) GetAllUsers(ctx context.Context) ([]models.User, error) {
 }
 
 func (r *UserRepo) DeleteUserByID(ctx context.Context, id string) error {
-	_, err := r.conn.Exec(ctx, `
+	cmd, err := r.conn.Exec(ctx, `
 		DELETE FROM users WHERE id = $1
 	`, id)
 	if err != nil {
 		return err
 	}
 
+	if cmd.RowsAffected() == 0 {
+		return fmt.Errorf("user not found")
+	}
+
 	return nil
 }
 
-func (r *UserRepo) UpdateUser(ctx context.Context, user models.User) (string, error) {
-	_, err := r.conn.Exec(ctx, `
+func (r *UserRepo) UpdateUser(ctx context.Context, user models.User) error {
+	cmd, err := r.conn.Exec(ctx, `
 		UPDATE users SET name = $1, age = $2 WHERE id = $3
 	`, user.Name, user.Age, user.ID)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return user.ID, nil
+	if cmd.RowsAffected() == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
 }

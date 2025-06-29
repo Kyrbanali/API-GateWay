@@ -31,6 +31,6 @@ func (u *UseCase) DeleteUserByID(ctx context.Context, id string) error {
 	return u.userRepo.DeleteUserByID(ctx, id)
 }
 
-func (u *UseCase) UpdateUser(ctx context.Context, user models.User) (string, error) {
+func (u *UseCase) UpdateUser(ctx context.Context, user models.User) error {
 	return u.userRepo.UpdateUser(ctx, user)
 }

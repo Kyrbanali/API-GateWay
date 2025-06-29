@@ -87,13 +87,14 @@ func (h *Handle) DeleteUserByID(c *fiber.Ctx) error {
 	err := h.uc.DeleteUserByID(c.Context(), id)
 
 	if err != nil {
-		if err.Error() == "no rows in result set" || strings.Contains(err.Error(), "no rows") {
+		if strings.Contains(err.Error(), "not found") {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "user not found",
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error":   "failed to delete user",
+			"details": err.Error(),
 		})
 	}
 
@@ -117,19 +118,20 @@ func (h *Handle) UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	id, err := h.uc.UpdateUser(c.Context(), user)
+	err := h.uc.UpdateUser(c.Context(), user)
 	if err != nil {
-		if err.Error() == "no rows in result set" || strings.Contains(err.Error(), "no rows") {
+		if strings.Contains(err.Error(), "not found") {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "user not found",
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error":   "failed to update user",
+			"details": err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"id": id,
+		"id": user.ID,
 	})
 }
