@@ -41,3 +41,25 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 
 	return user, err
 }
+
+func (r *UserRepo) GetAllUsers(ctx context.Context) ([]models.User, error) {
+	rows, err := r.conn.Query(ctx, `
+		SELECT id, name, age FROM users
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(&user.ID, &user.Name, &user.Age); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}

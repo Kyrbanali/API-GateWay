@@ -22,3 +22,7 @@ func (u *UseCase) CreateUser(ctx context.Context, user models.User) (string, err
 func (u *UseCase) GetUserByID(ctx context.Context, id string) (models.User, error) {
 	return u.userRepo.GetUserByID(ctx, id)
 }
+
+func (u *UseCase) GetAllUsers(ctx context.Context) ([]models.User, error) {
+	return u.userRepo.GetAllUsers(ctx)
+}
