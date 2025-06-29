@@ -1,0 +1,9 @@
+postgres:
+    host: "postgres"
+    pass: "postgres"
+    user: "postgres"
+    db: "postgres"
+    port: "5432"
+api:
+    port: "3000"
+    
