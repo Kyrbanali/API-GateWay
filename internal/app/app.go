@@ -5,7 +5,9 @@ import (
 
 	"github.com/Kyrbanali/API-GateWay/config"
 	"github.com/Kyrbanali/API-GateWay/internal/handler"
+	"github.com/Kyrbanali/API-GateWay/internal/repository"
 	"github.com/Kyrbanali/API-GateWay/internal/storage"
+	"github.com/Kyrbanali/API-GateWay/internal/usecase"
 	"github.com/pkg/errors"
 )
 
@@ -23,13 +25,16 @@ func Run() error {
 		cfg.Postgres.DB,
 	)
 
-	db, err := storage.GetConnect(dsn)
+	conn, err := storage.GetConnect(dsn)
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to DB")
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	h := handler.New(db)
+	repo := repository.New(conn)
+	uc := usecase.New(repo)
+	h := handler.New(uc)
+
 	router := GetRouter(h)
 
 	if err := router.Listen(":3000"); err != nil {
