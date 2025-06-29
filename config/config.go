@@ -31,8 +31,7 @@ func Load() (*Config, error) {
 		slog.Error("read config.yaml", slog.Any("err", err))
 	}
 
-	viper.SetConfigFile(".env")
-	_ = viper.MergeInConfig()
+	viper.AutomaticEnv()
 
 	cfg := &Config{
 		Postgres: PostgresConfig{
