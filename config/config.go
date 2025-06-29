@@ -3,6 +3,7 @@ package config
 import (
 	"log/slog"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -29,6 +30,10 @@ func Load() (*Config, error) {
 
 	if err := viper.ReadInConfig(); err != nil {
 		slog.Error("read config.yaml", slog.Any("err", err))
+	}
+
+	if err := godotenv.Load(); err != nil {
+		slog.Warn(".env not found", slog.Any("err", err))
 	}
 
 	viper.AutomaticEnv()
