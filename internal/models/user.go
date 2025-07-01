@@ -16,7 +16,7 @@ type CreateUserResponse struct {
 }
 
 type UserDTO struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Age  int    `json:"age"`
+	ID   string
+	Name string
+	Age  int
 }
