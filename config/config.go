@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -37,4 +39,14 @@ func Load() (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+func (p *PostgresConfig) BuildDSN() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		p.User,
+		p.Pass,
+		p.Host,
+		p.Port,
+		p.DB,
+	)
 }

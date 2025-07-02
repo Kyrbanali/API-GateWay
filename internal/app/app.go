@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/Kyrbanali/API-GateWay/config"
 	"github.com/Kyrbanali/API-GateWay/internal/handler"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
@@ -17,13 +15,7 @@ func Run() error {
 		return errors.Wrap(err, "config load failed")
 	}
 
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		cfg.Postgres.User,
-		cfg.Postgres.Pass,
-		cfg.Postgres.Host,
-		cfg.Postgres.Port,
-		cfg.Postgres.DB,
-	)
+	dsn := cfg.Postgres.BuildDSN()
 
 	conn, err := storage.GetConnect(dsn)
 	if err != nil {
