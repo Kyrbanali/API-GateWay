@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Kyrbanali/API-GateWay/internal/models"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
 )
@@ -28,7 +29,7 @@ func (r *UserRepo) CreateUser(ctx context.Context, user models.UserDTO) (string,
 	return user.ID, nil
 }
 
-func (r *UserRepo) GetUserByID(ctx context.Context, id string) (models.UserDTO, error) {
+func (r *UserRepo) GetUserByID(ctx context.Context, id string) (*models.UserDTO, error) {
 	var user models.UserDTO
 
 	row := r.conn.QueryRow(ctx, `
@@ -36,8 +37,14 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id string) (models.UserDTO, 
 	`, id)
 
 	err := row.Scan(&user.ID, &user.Name, &user.Age)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errors.Wrap(err, "GetUserByID not found")
+		}
+		return nil, errors.Wrap(err, "GetUserByID row.Scan")
+	}
 
-	return user, errors.Wrap(err, "GetUserByID")
+	return &user, nil
 }
 
 func (r *UserRepo) GetAllUsers(ctx context.Context) ([]models.UserDTO, error) {

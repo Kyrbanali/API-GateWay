@@ -19,7 +19,7 @@ func (u *UseCase) CreateUser(ctx context.Context, user models.UserDTO) (string, 
 	return u.userRepo.CreateUser(ctx, user)
 }
 
-func (u *UseCase) GetUserByID(ctx context.Context, id string) (models.UserDTO, error) {
+func (u *UseCase) GetUserByID(ctx context.Context, id string) (*models.UserDTO, error) {
 	return u.userRepo.GetUserByID(ctx, id)
 }
 
