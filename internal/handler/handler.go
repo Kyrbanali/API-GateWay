@@ -10,7 +10,7 @@ import (
 )
 
 type Handle struct {
-	uc *usecase.UseCase
+	uc usecase.UserProvider
 }
 
 func New(uc *usecase.UseCase) *Handle {
