@@ -2,19 +2,19 @@ package storage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/pkg/errors"
 )
 
 func GetConnect(connStr string) (*pgxpool.Pool, error) {
 	pool, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect pgx pool: %w", err)
+		return nil, errors.Wrap(err, "failed to connect pgx pool")
 	}
 
 	if err := pool.Ping(context.Background()); err != nil {
-		return nil, fmt.Errorf("failed to ping to DB: %w", err)
+		return nil, errors.Wrap(err, "failed to ping to DB")
 	}
 
 	return pool, nil
