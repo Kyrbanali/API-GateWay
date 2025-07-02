@@ -33,9 +33,9 @@ func Run() error {
 
 	repo := repository.New(conn)
 	uc := usecase.New(repo)
-	h := handler.New(uc)
+	handle := handler.New(uc)
 
-	router := GetRouter(h)
+	router := GetRouter(handle)
 
 	if err := router.Listen(":3000"); err != nil {
 		return errors.Wrap(err, "app listen")
