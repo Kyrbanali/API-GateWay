@@ -1,9 +1,7 @@
 package config
 
 import (
-	"log/slog"
-
-	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -29,27 +27,14 @@ func Load() (*Config, error) {
 	viper.SetConfigType("yaml")
 
 	if err := viper.ReadInConfig(); err != nil {
-		slog.Error("read config.yaml", slog.Any("err", err))
-	}
-
-	if err := godotenv.Load(); err != nil {
-		slog.Warn(".env not found", slog.Any("err", err))
+		return nil, errors.Wrap(err, "read config.yaml")
 	}
 
 	viper.AutomaticEnv()
-
-	cfg := &Config{
-		Postgres: PostgresConfig{
-			Host: viper.GetString("POSTGRES_HOST"),
-			User: viper.GetString("POSTGRES_USER"),
-			Pass: viper.GetString("POSTGRES_PASS"),
-			DB:   viper.GetString("POSTGRES_DB"),
-			Port: viper.GetString("POSTGRES_PORT"),
-		},
-		App: AppConfig{
-			Port: viper.GetString("API_PORT"),
-		},
+	var cfg Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal config")
 	}
 
-	return cfg, nil
+	return &cfg, nil
 }
