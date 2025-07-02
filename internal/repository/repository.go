@@ -2,10 +2,10 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/pkg/errors"
 )
 
 type UserRepo struct {
@@ -22,7 +22,7 @@ func (r *UserRepo) CreateUser(ctx context.Context, user models.UserDTO) (string,
 	`, user.ID, user.Name, user.Age)
 
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "CreateUser")
 	}
 
 	return user.ID, nil
@@ -37,7 +37,7 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id string) (models.UserDTO, 
 
 	err := row.Scan(&user.ID, &user.Name, &user.Age)
 
-	return user, err
+	return user, errors.Wrap(err, "GetUserByID")
 }
 
 func (r *UserRepo) GetAllUsers(ctx context.Context) ([]models.UserDTO, error) {
@@ -45,7 +45,7 @@ func (r *UserRepo) GetAllUsers(ctx context.Context) ([]models.UserDTO, error) {
 		SELECT id, name, age FROM users
 	`)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "GetAllUsers")
 	}
 	defer rows.Close()
 
@@ -54,7 +54,7 @@ func (r *UserRepo) GetAllUsers(ctx context.Context) ([]models.UserDTO, error) {
 	for rows.Next() {
 		var user models.UserDTO
 		if err := rows.Scan(&user.ID, &user.Name, &user.Age); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "GetAllUsers rows.scan")
 		}
 		users = append(users, user)
 	}
@@ -67,11 +67,11 @@ func (r *UserRepo) DeleteUserByID(ctx context.Context, id string) error {
 		DELETE FROM users WHERE id = $1
 	`, id)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "DeleteUserByID")
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return fmt.Errorf("user not found")
+		return errors.Wrap(err, "user not found")
 	}
 
 	return nil
@@ -82,11 +82,11 @@ func (r *UserRepo) UpdateUser(ctx context.Context, user models.UserDTO) error {
 		UPDATE users SET name = $1, age = $2 WHERE id = $3
 	`, user.Name, user.Age, user.ID)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "UpdateUser")
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return fmt.Errorf("user not found")
+		return errors.Wrap(err, "user not found")
 	}
 
 	return nil
