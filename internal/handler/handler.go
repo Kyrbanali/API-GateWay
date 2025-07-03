@@ -5,6 +5,7 @@ import (
 
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/usecase"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -12,6 +13,8 @@ import (
 type Handle struct {
 	uc usecase.UserProvider
 }
+
+var validate = validator.New()
 
 func New(uc *usecase.UseCase) *Handle {
 	return &Handle{uc: uc}
@@ -23,6 +26,13 @@ func (h *Handle) CreateUser(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "failed to parse json",
+		})
+	}
+
+	if err := validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "validation failed",
+			"details": err,
 		})
 	}
 
@@ -113,6 +123,13 @@ func (h *Handle) UpdateUser(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "failed to parse Json",
+		})
+	}
+
+	if err := validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "validation failed",
+			"details": err,
 		})
 	}
 
