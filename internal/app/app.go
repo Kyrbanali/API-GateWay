@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/Kyrbanali/API-GateWay/config"
+	"github.com/Kyrbanali/API-GateWay/internal/cache"
 	"github.com/Kyrbanali/API-GateWay/internal/handler"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
 	"github.com/Kyrbanali/API-GateWay/internal/storage"
@@ -24,7 +25,8 @@ func Run() error {
 	defer conn.Close()
 
 	repo := repository.New(conn)
-	uc := usecase.New(repo)
+	cacheDecorator := cache.New(repo)
+	uc := usecase.New(cacheDecorator)
 	handle := handler.New(uc)
 
 	router := GetRouter(handle)

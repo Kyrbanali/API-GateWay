@@ -13,8 +13,11 @@ type Decorator struct {
 	userRepo repository.UserProvider
 }
 
-func New() *Decorator {
-	return &Decorator{}
+func New(repo repository.UserProvider) *Decorator {
+	return &Decorator{
+		users:    make(map[string]models.UserDTO),
+		userRepo: repo,
+	}
 }
 
 func (d *Decorator) GetUserByID(ctx context.Context, id string) (*models.UserDTO, error) {
