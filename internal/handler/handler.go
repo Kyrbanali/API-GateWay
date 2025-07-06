@@ -37,12 +37,7 @@ func (h *Handle) CreateUser(c *fiber.Ctx) error {
 			"details": err,
 		})
 	}
-
-	user := models.UserDTO{
-		ID:   uuid.NewString(),
-		Name: req.Name,
-		Age:  req.Age,
-	}
+	user := req.ToUserDTOFromCreate()
 
 	id, err := h.uc.CreateUser(c.Context(), user)
 	if err != nil {
@@ -141,11 +136,7 @@ func (h *Handle) UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user := models.UserDTO{
-		ID:   req.ID,
-		Name: req.Name,
-		Age:  req.Age,
-	}
+	user := req.ToUserDTOFromUpdate()
 
 	err := h.uc.UpdateUser(c.Context(), user)
 	if err != nil {
