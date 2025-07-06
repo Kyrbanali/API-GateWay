@@ -1,6 +1,8 @@
 package app
 
 import (
+	"log"
+
 	"github.com/Kyrbanali/API-GateWay/config"
 	"github.com/Kyrbanali/API-GateWay/internal/cache"
 	"github.com/Kyrbanali/API-GateWay/internal/handler"
@@ -12,13 +14,12 @@ import (
 
 func Run() error {
 	cfg, err := config.Load()
+	log.Println("cfg", cfg)
 	if err != nil {
 		return errors.Wrap(err, "config load failed")
 	}
 
-	dsn := cfg.Postgres.BuildDSN()
-
-	conn, err := storage.GetConnect(dsn)
+	conn, err := storage.GetConnect(cfg.Postgres.BuildDSN())
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to DB")
 	}
@@ -31,7 +32,7 @@ func Run() error {
 
 	router := GetRouter(handle)
 
-	if err := router.Listen(":3000"); err != nil {
+	if err := router.Listen(":" + cfg.App.Port); err != nil {
 		return errors.Wrap(err, "app listen")
 	}
 

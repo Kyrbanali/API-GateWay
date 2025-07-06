@@ -4,6 +4,6 @@ postgres:
     user: "postgres"
     db: "postgres"
     port: "5432"
-api:
+app:
     port: "3000"
     
