@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"log"
 
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
@@ -36,10 +37,45 @@ func (d *Decorator) GetUserByID(ctx context.Context, id string) (*models.UserDTO
 	return userPtr, nil
 }
 
-func (d *Decorator) GetAllUsers(ctx context.Context) error {}
+func (d *Decorator) GetAllUsers(ctx context.Context) ([]models.UserDTO, error) {
+	users, err := d.userRepo.GetAllUsers(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "GetAllUsers")
+	}
 
-func CreateUser(ctx context.Context, user models.UserDTO) (string, error) {}
+	return users, nil
+}
 
-func DeleteUserByID(ctx context.Context, id string) error {}
+func (d *Decorator) CreateUser(ctx context.Context, user models.UserDTO) (string, error) {
+	id, err := d.userRepo.CreateUser(ctx, user)
+	if err != nil {
+		return "", errors.Wrap(err, "CreateUser")
+	}
 
-func UpdateUser(ctx context.Context, user models.UserDTO) error {}
+	d.users[id] = user
+
+	return id, nil
+}
+
+func (d *Decorator) DeleteUserByID(ctx context.Context, id string) error {
+	err := d.userRepo.DeleteUserByID(ctx, id)
+	if err != nil {
+		return errors.Wrap(err, "DeleteUser")
+	}
+
+	delete(d.users, id)
+	log.Println("users cache", d.users)
+
+	return nil
+}
+
+func (d *Decorator) UpdateUser(ctx context.Context, user models.UserDTO) error {
+	err := d.userRepo.UpdateUser(ctx, user)
+	if err != nil {
+		return errors.Wrap(err, "UpdateUser")
+	}
+
+	d.users[user.ID] = user
+
+	return nil
+}
