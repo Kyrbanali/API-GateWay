@@ -10,11 +10,11 @@ import (
 func GetConnect(connStr string) (*pgxpool.Pool, error) {
 	pool, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect pgx pool")
+		return nil, errors.Wrap(err, "connect pgx pool")
 	}
 
 	if err := pool.Ping(context.Background()); err != nil {
-		return nil, errors.Wrap(err, "failed to ping to DB")
+		return nil, errors.Wrap(err, "ping to DB")
 	}
 
 	return pool, nil

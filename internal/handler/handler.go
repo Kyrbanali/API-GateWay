@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"strings"
 
+	"github.com/Kyrbanali/API-GateWay/internal/apperr"
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/usecase"
 	"github.com/go-playground/validator/v10"
@@ -25,13 +27,13 @@ func (h *Handle) CreateUser(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "failed to parse json",
+			"error": "parse json",
 		})
 	}
 
 	if err := validate.Struct(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "validation failed",
+			"error":   "validation",
 			"details": err,
 		})
 	}
@@ -45,7 +47,7 @@ func (h *Handle) CreateUser(c *fiber.Ctx) error {
 	id, err := h.uc.CreateUser(c.Context(), user)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to create user",
+			"error": "CreateUser",
 		})
 	}
 
@@ -63,13 +65,13 @@ func (h *Handle) GetUserByID(c *fiber.Ctx) error {
 
 	user, err := h.uc.GetUserByID(c.Context(), id)
 	if err != nil {
-		if err.Error() == "no rows in result set" || strings.Contains(err.Error(), "no rows") {
+		if errors.Is(err, apperr.ErrNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "user not found",
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   "error querying user",
+			"error":   "querying user",
 			"details": err.Error(),
 		})
 	}
@@ -81,7 +83,7 @@ func (h *Handle) GetAllUsers(c *fiber.Ctx) error {
 	users, err := h.uc.GetAllUsers(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   "failed to fetch users",
+			"error":   "fetch users",
 			"details": err.Error(),
 		})
 	}
@@ -107,7 +109,7 @@ func (h *Handle) DeleteUserByID(c *fiber.Ctx) error {
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   "failed to delete user",
+			"error":   "delete user",
 			"details": err.Error(),
 		})
 	}
@@ -122,13 +124,13 @@ func (h *Handle) UpdateUser(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "failed to parse Json",
+			"error": "parse Json",
 		})
 	}
 
 	if err := validate.Struct(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "validation failed",
+			"error":   "validation",
 			"details": err,
 		})
 	}
@@ -153,7 +155,7 @@ func (h *Handle) UpdateUser(c *fiber.Ctx) error {
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   "failed to update user",
+			"error":   "update user",
 			"details": err.Error(),
 		})
 	}
