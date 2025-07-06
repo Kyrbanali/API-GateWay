@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/Kyrbanali/API-GateWay/config"
+	"github.com/Kyrbanali/API-GateWay/database"
 	"github.com/Kyrbanali/API-GateWay/internal/cache"
 	"github.com/Kyrbanali/API-GateWay/internal/handler"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
@@ -19,7 +20,12 @@ func Run() error {
 		return errors.Wrap(err, "config load failed")
 	}
 
-	conn, err := storage.GetConnect(cfg.Postgres.BuildDSN())
+	dsn := cfg.Postgres.BuildDSN()
+	if err := database.Migrate(dsn); err != nil {
+		return errors.Wrap(err, "migration")
+	}
+
+	conn, err := storage.GetConnect(dsn)
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to DB")
 	}
