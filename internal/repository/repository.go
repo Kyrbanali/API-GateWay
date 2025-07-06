@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/Kyrbanali/API-GateWay/internal/apperr"
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,7 +40,7 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id string) (*models.UserDTO,
 	err := row.Scan(&user.ID, &user.Name, &user.Age)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.Wrap(err, "GetUserByID not found")
+			return nil, apperr.ErrNotFound
 		}
 		return nil, errors.Wrap(err, "GetUserByID row.Scan")
 	}
@@ -78,7 +79,7 @@ func (r *UserRepo) DeleteUserByID(ctx context.Context, id string) error {
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return errors.Wrap(err, "user not found")
+		return apperr.ErrNotFound
 	}
 
 	return nil
@@ -93,7 +94,7 @@ func (r *UserRepo) UpdateUser(ctx context.Context, user models.UserDTO) error {
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return errors.Wrap(err, "user not found")
+		return apperr.ErrNotFound
 	}
 
 	return nil
