@@ -2,7 +2,7 @@ package cache
 
 import (
 	"context"
-	"log"
+	"sync"
 
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
@@ -10,6 +10,7 @@ import (
 )
 
 type Decorator struct {
+	mutex    sync.Mutex
 	users    map[string]models.UserDTO
 	userRepo repository.UserProvider
 }
@@ -22,17 +23,22 @@ func New(repo repository.UserProvider) *Decorator {
 }
 
 func (d *Decorator) GetUserByID(ctx context.Context, id string) (*models.UserDTO, error) {
+	d.mutex.Lock()
 	user, ok := d.users[id]
 	if ok {
+		d.mutex.Unlock()
 		return &user, nil
 	}
+	d.mutex.Unlock()
 
 	userPtr, err := d.userRepo.GetUserByID(ctx, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "GetUser")
 	}
 
+	d.mutex.Lock()
 	d.users[id] = *userPtr
+	d.mutex.Unlock()
 
 	return userPtr, nil
 }
@@ -52,7 +58,9 @@ func (d *Decorator) CreateUser(ctx context.Context, user models.UserDTO) (string
 		return "", errors.Wrap(err, "CreateUser")
 	}
 
+	d.mutex.Lock()
 	d.users[id] = user
+	d.mutex.Unlock()
 
 	return id, nil
 }
@@ -63,8 +71,9 @@ func (d *Decorator) DeleteUserByID(ctx context.Context, id string) error {
 		return errors.Wrap(err, "DeleteUser")
 	}
 
+	d.mutex.Lock()
 	delete(d.users, id)
-	log.Println("users cache", d.users)
+	d.mutex.Unlock()
 
 	return nil
 }
@@ -75,7 +84,9 @@ func (d *Decorator) UpdateUser(ctx context.Context, user models.UserDTO) error {
 		return errors.Wrap(err, "UpdateUser")
 	}
 
+	d.mutex.Lock()
 	d.users[user.ID] = user
+	d.mutex.Unlock()
 
 	return nil
 }
