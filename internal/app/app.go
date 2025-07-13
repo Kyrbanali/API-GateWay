@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	"github.com/Kyrbanali/API-GateWay/config"
 	"github.com/Kyrbanali/API-GateWay/database"
 	"github.com/Kyrbanali/API-GateWay/internal/cache"
@@ -28,7 +30,7 @@ func Run() error {
 	defer conn.Close()
 
 	repo := repository.New(conn)
-	cacheDecorator := cache.New(repo)
+	cacheDecorator := cache.New(repo, 1*time.Minute) //доставать ttl из конфига
 	uc := usecase.New(cacheDecorator)
 	handle := handler.New(uc)
 
