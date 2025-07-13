@@ -30,7 +30,18 @@ func Run() error {
 	defer conn.Close()
 
 	repo := repository.New(conn)
-	cacheDecorator := cache.New(repo, 1*time.Minute) //доставать ttl из конфига
+
+	ttl, err := time.ParseDuration(cfg.Cache.TTL)
+	if err != nil {
+		return errors.Wrap(err, "invalid cache ttl")
+	}
+
+	cleanupInterval, err := time.ParseDuration(cfg.Cache.CleanupInterval)
+	if err != nil {
+		return errors.Wrap(err, "invalid cache cleanupInterval")
+	}
+
+	cacheDecorator := cache.New(repo, ttl, cleanupInterval)
 	uc := usecase.New(cacheDecorator)
 	handle := handler.New(uc)
 

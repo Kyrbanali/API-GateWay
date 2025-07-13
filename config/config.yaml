@@ -4,6 +4,11 @@ postgres:
     user: "postgres"
     db: "postgres"
     port: "5432"
+
 app:
     port: "3000"
+
+cache:
+    ttl: "1m"
+    cleanupinterval: "10s"
     

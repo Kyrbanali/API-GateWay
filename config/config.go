@@ -10,6 +10,7 @@ import (
 type Config struct {
 	App      AppConfig
 	Postgres PostgresConfig
+	Cache    CacheConfig
 }
 
 type AppConfig struct {
@@ -22,6 +23,11 @@ type PostgresConfig struct {
 	Pass string
 	DB   string
 	Port string
+}
+
+type CacheConfig struct {
+	TTL             string
+	CleanupInterval string
 }
 
 func Load() (*Config, error) {

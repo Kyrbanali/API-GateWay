@@ -22,20 +22,20 @@ type WrapUser struct {
 	updatedAt time.Time
 }
 
-func New(repo repository.UserProvider, ttl time.Duration) *Decorator {
+func New(repo repository.UserProvider, ttl time.Duration, cleanupInterval time.Duration) *Decorator {
 	d := &Decorator{
 		ttl:      ttl,
 		users:    make(map[string]WrapUser),
 		userRepo: repo,
 	}
-	d.startEvictionLoop()
+	d.startEvictionLoop(cleanupInterval)
 	return d
 }
 
-func (d *Decorator) startEvictionLoop() {
+func (d *Decorator) startEvictionLoop(cleanupInterval time.Duration) {
 	go func() {
 		for {
-			time.Sleep(10 * time.Second)
+			time.Sleep(cleanupInterval)
 
 			d.mutex.Lock()
 			for id, entry := range d.users {
