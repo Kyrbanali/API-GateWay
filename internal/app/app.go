@@ -1,8 +1,6 @@
 package app
 
 import (
-	"log"
-
 	"github.com/Kyrbanali/API-GateWay/config"
 	"github.com/Kyrbanali/API-GateWay/database"
 	"github.com/Kyrbanali/API-GateWay/internal/cache"
@@ -15,17 +13,15 @@ import (
 
 func Run() error {
 	cfg, err := config.Load()
-	log.Println("cfg", cfg)
 	if err != nil {
 		return errors.Wrap(err, "config load failed")
 	}
 
-	dsn := cfg.Postgres.BuildDSN()
-	if err := database.Migrate(dsn); err != nil {
+	if err := database.Migrate(cfg.Postgres.BuildDSN()); err != nil {
 		return errors.Wrap(err, "migration")
 	}
 
-	conn, err := storage.GetConnect(dsn)
+	conn, err := storage.GetConnect(cfg.Postgres.BuildDSN())
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to DB")
 	}

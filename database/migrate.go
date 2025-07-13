@@ -8,7 +8,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
-	// _ "git.hi-tech.org/iva/one/backend/chats/database/migrations"
 )
 
 //go:embed migrations/*.sql
