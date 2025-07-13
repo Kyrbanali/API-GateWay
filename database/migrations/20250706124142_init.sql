@@ -2,8 +2,8 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS users(
     id UUID PRIMARY KEY,
-    name TEXT NOT NULL,
-    age INT NOT NULL
+    name VARCHAR(255) NOT NULL,
+    age SMALLINT NOT NULL
 );
 -- +goose StatementEnd
 
