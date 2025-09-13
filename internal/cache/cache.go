@@ -12,7 +12,7 @@ import (
 
 type Decorator struct {
 	ttl      time.Duration
-	mutex    sync.Mutex
+	mu       sync.Mutex
 	users    map[string]WrapUser
 	userRepo repository.UserProvider
 }
@@ -20,6 +20,33 @@ type Decorator struct {
 type WrapUser struct {
 	user      models.UserDTO
 	updatedAt time.Time
+}
+
+func (d *Decorator) get(id string) (*models.UserDTO, bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	user, ok := d.users[id]
+	if ok {
+		return &user.user, true
+	}
+	return nil, false
+}
+
+func (d *Decorator) set(id string, user models.UserDTO) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	d.users[id] = WrapUser{
+		user:      user,
+		updatedAt: time.Now(),
+	}
+}
+
+func (d *Decorator) delete(id string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	delete(d.users, id)
 }
 
 func New(repo repository.UserProvider, ttl time.Duration, cleanupInterval time.Duration) *Decorator {
@@ -37,37 +64,28 @@ func (d *Decorator) startEvictionLoop(cleanupInterval time.Duration) {
 		for {
 			time.Sleep(cleanupInterval)
 
-			d.mutex.Lock()
+			d.mu.Lock()
 			for id, entry := range d.users {
 				if time.Now().After(entry.updatedAt.Add(d.ttl)) {
 					delete(d.users, id)
 				}
 			}
-			d.mutex.Unlock()
+			d.mu.Unlock()
 		}
 	}()
 }
 
 func (d *Decorator) GetUserByID(ctx context.Context, id string) (*models.UserDTO, error) {
-	d.mutex.Lock()
-	user, ok := d.users[id]
-	if ok {
-		d.mutex.Unlock()
-		return &user.user, nil
+	if user, ok := d.get(id); ok {
+		return user, nil
 	}
-	d.mutex.Unlock()
 
 	userPtr, err := d.userRepo.GetUserByID(ctx, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "GetUser")
 	}
 
-	d.mutex.Lock()
-	d.users[id] = WrapUser{
-		user:      *userPtr,
-		updatedAt: time.Now(),
-	}
-	d.mutex.Unlock()
+	d.set(id, *userPtr)
 
 	return userPtr, nil
 }
@@ -86,12 +104,7 @@ func (d *Decorator) CreateUser(ctx context.Context, user models.UserDTO) (string
 		return "", errors.Wrap(err, "CreateUser")
 	}
 
-	d.mutex.Lock()
-	d.users[id] = WrapUser{
-		user:      user,
-		updatedAt: time.Now(),
-	}
-	d.mutex.Unlock()
+	d.set(id, user)
 
 	return id, nil
 }
@@ -102,10 +115,7 @@ func (d *Decorator) DeleteUserByID(ctx context.Context, id string) error {
 		return errors.Wrap(err, "DeleteUser")
 	}
 
-	d.mutex.Lock()
-	delete(d.users, id)
-	d.mutex.Unlock()
-
+	d.delete(id)
 	return nil
 }
 
@@ -115,12 +125,6 @@ func (d *Decorator) UpdateUser(ctx context.Context, user models.UserDTO) error {
 		return errors.Wrap(err, "UpdateUser")
 	}
 
-	d.mutex.Lock()
-	d.users[user.ID] = WrapUser{
-		user:      user,
-		updatedAt: time.Now(),
-	}
-	d.mutex.Unlock()
-
+	d.set(user.ID, user)
 	return nil
 }
