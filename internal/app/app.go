@@ -1,8 +1,6 @@
 package app
 
 import (
-	"time"
-
 	"github.com/Kyrbanali/API-GateWay/config"
 	"github.com/Kyrbanali/API-GateWay/database"
 	"github.com/Kyrbanali/API-GateWay/internal/cache"
@@ -31,17 +29,7 @@ func Run() error {
 
 	repo := repository.New(conn)
 
-	ttl, err := time.ParseDuration(cfg.Cache.TTL)
-	if err != nil {
-		return errors.Wrap(err, "invalid cache ttl")
-	}
-
-	cleanupInterval, err := time.ParseDuration(cfg.Cache.CleanupInterval)
-	if err != nil {
-		return errors.Wrap(err, "invalid cache cleanupInterval")
-	}
-
-	cacheDecorator := cache.New(repo, ttl, cleanupInterval)
+	cacheDecorator := cache.New(repo, cfg.Cache.TTL, cfg.Cache.CleanupInterval)
 	uc := usecase.New(cacheDecorator)
 	handle := handler.New(uc)
 

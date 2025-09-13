@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -26,8 +27,8 @@ type PostgresConfig struct {
 }
 
 type CacheConfig struct {
-	TTL             string
-	CleanupInterval string
+	TTL             time.Duration
+	CleanupInterval time.Duration
 }
 
 func Load() (*Config, error) {
@@ -38,6 +39,7 @@ func Load() (*Config, error) {
 		return nil, errors.Wrap(err, "read config.yaml")
 	}
 
+	//slog debug
 	viper.AutomaticEnv()
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
