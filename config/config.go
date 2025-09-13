@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -32,17 +34,21 @@ type CacheConfig struct {
 }
 
 func Load() (*Config, error) {
-	viper.SetConfigFile("config/config.yaml")
-	viper.SetConfigType("yaml")
+	_ = godotenv.Load()
 
-	if err := viper.ReadInConfig(); err != nil {
+	v := viper.New()
+	v.SetConfigFile("config/config.yaml")
+	v.SetConfigType("yaml")
+
+	if err := v.ReadInConfig(); err != nil {
 		return nil, errors.Wrap(err, "read config.yaml")
 	}
 
-	//slog debug
-	viper.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+
 	var cfg Config
-	if err := viper.Unmarshal(&cfg); err != nil {
+	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal config")
 	}
 

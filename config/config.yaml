@@ -1,14 +1,14 @@
 postgres:
-    host: "postgres"
-    pass: "postgres"
-    user: "postgres"
-    db: "postgres"
-    port: "5432"
+    host: "postgressss"
+    pass: "postgressss"
+    user: "postgressss"
+    db: "postgressss"
+    port: "5433"
 
 app:
     port: "3000"
 
 cache:
-    ttl: "1m"
-    cleanupinterval: "10s"
+    ttl: "10s"
+    cleanupinterval: "5s"
     
