@@ -32,7 +32,7 @@ func Run() error {
 	cacheDecorator := cache.New(repo, cfg.Cache.TTL, cfg.Cache.CleanupInterval)
 
 	jobCh := make(chan worker.Job, cfg.Workers.QueueSize)
-	worker.Start(cfg.Workers.Count, jobCh)
+	worker.LinkWorker(cfg.Workers.Count, jobCh, cacheDecorator)
 
 	uc := usecase.New(cacheDecorator, jobCh)
 	handle := handler.New(uc)
