@@ -11,4 +11,7 @@ app:
 cache:
     ttl: "10s"
     cleanupinterval: "5s"
-    
+
+workers:
+    count: "2"
+    queuesize: "64"    

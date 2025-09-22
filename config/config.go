@@ -14,6 +14,7 @@ type Config struct {
 	App      AppConfig
 	Postgres PostgresConfig
 	Cache    CacheConfig
+	Workers  WorkersConfig
 }
 
 type AppConfig struct {
@@ -31,6 +32,11 @@ type PostgresConfig struct {
 type CacheConfig struct {
 	TTL             time.Duration
 	CleanupInterval time.Duration
+}
+
+type WorkersConfig struct {
+	Count     int
+	QueueSize int
 }
 
 func Load() (*Config, error) {

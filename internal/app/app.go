@@ -31,8 +31,8 @@ func Run() error {
 	repo := repository.New(conn)
 	cacheDecorator := cache.New(repo, cfg.Cache.TTL, cfg.Cache.CleanupInterval)
 
-	jobCh := make(chan worker.Job, 64)
-	worker.Start(3, jobCh)
+	jobCh := make(chan worker.Job, cfg.Workers.QueueSize)
+	worker.Start(cfg.Workers.Count, jobCh)
 
 	uc := usecase.New(cacheDecorator, jobCh)
 	handle := handler.New(uc)
