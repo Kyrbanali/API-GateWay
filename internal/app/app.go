@@ -8,6 +8,7 @@ import (
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
 	"github.com/Kyrbanali/API-GateWay/internal/storage"
 	"github.com/Kyrbanali/API-GateWay/internal/usecase"
+	"github.com/Kyrbanali/API-GateWay/internal/worker"
 	"github.com/pkg/errors"
 )
 
@@ -28,11 +29,13 @@ func Run() error {
 	defer conn.Close()
 
 	repo := repository.New(conn)
-
 	cacheDecorator := cache.New(repo, cfg.Cache.TTL, cfg.Cache.CleanupInterval)
-	uc := usecase.New(cacheDecorator)
-	handle := handler.New(uc)
 
+	jobCh := make(chan worker.Job, 64)
+	worker.Start(3, jobCh)
+
+	uc := usecase.New(cacheDecorator, jobCh)
+	handle := handler.New(uc)
 	router := GetRouter(handle)
 
 	if err := router.Listen(":" + cfg.App.Port); err != nil {

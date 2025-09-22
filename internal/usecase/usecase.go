@@ -5,18 +5,29 @@ import (
 
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
+	"github.com/Kyrbanali/API-GateWay/internal/worker"
 )
 
 type UseCase struct {
 	userRepo repository.UserProvider
+	jobs     chan<- worker.Job
 }
 
-func New(userRepo repository.UserProvider) *UseCase {
-	return &UseCase{userRepo: userRepo}
+func New(userRepo repository.UserProvider, jobs chan<- worker.Job) *UseCase {
+	return &UseCase{userRepo: userRepo, jobs: jobs}
 }
 
 func (u *UseCase) CreateUser(ctx context.Context, user models.UserDTO) (string, error) {
-	return u.userRepo.CreateUser(ctx, user)
+	id, err := u.userRepo.CreateUser(ctx, user)
+	if err != nil {
+		return "", err
+	}
+
+	if u.jobs != nil {
+		u.jobs <- worker.Job{ID: id}
+	}
+
+	return id, nil
 }
 
 func (u *UseCase) GetUserByID(ctx context.Context, id string) (*models.UserDTO, error) {
