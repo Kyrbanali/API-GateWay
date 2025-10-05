@@ -4,7 +4,9 @@ import (
 	"context"
 	"sync"
 	"time"
+	"unsafe"
 
+	"github.com/Kyrbanali/API-GateWay/internal/metrics"
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
 	"github.com/pkg/errors"
@@ -25,28 +27,27 @@ type WrapUser struct {
 func (d *Decorator) get(id string) (*models.UserDTO, bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-
-	user, ok := d.users[id]
+	u, ok := d.users[id]
 	if ok {
-		return &user.user, true
+		return &u.user, true
 	}
 	return nil, false
 }
 
 func (d *Decorator) set(id string, user models.UserDTO) {
 	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	d.users[id] = WrapUser{
-		user:      user,
-		updatedAt: time.Now(),
-	}
+	d.users[id] = WrapUser{user: user, updatedAt: time.Now()}
+	items, bytes := d.sizeLocked()
+	d.mu.Unlock()
+	metrics.SetCacheStats(items, bytes)
 }
 
 func (d *Decorator) delete(id string) {
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	delete(d.users, id)
+	items, bytes := d.sizeLocked()
+	d.mu.Unlock()
+	metrics.SetCacheStats(items, bytes)
 }
 
 func New(repo repository.UserProvider, ttl time.Duration, cleanupInterval time.Duration) *Decorator {
@@ -56,23 +57,40 @@ func New(repo repository.UserProvider, ttl time.Duration, cleanupInterval time.D
 		userRepo: repo,
 	}
 	d.startEvictionLoop(cleanupInterval)
+	metrics.SetCacheStats(0, 0)
 	return d
 }
 
 func (d *Decorator) startEvictionLoop(cleanupInterval time.Duration) {
 	go func() {
-		for {
-			time.Sleep(cleanupInterval)
-
+		t := time.NewTicker(cleanupInterval)
+		defer t.Stop()
+		for range t.C {
 			d.mu.Lock()
 			for id, entry := range d.users {
-				if time.Now().After(entry.updatedAt.Add(d.ttl)) {
+				if time.Since(entry.updatedAt) > d.ttl {
 					delete(d.users, id)
 				}
 			}
+			items, bytes := d.sizeLocked()
 			d.mu.Unlock()
+			metrics.SetCacheStats(items, bytes)
 		}
 	}()
+}
+
+func (d *Decorator) sizeLocked() (items int, bytes int64) {
+	items = len(d.users)
+	var total int64
+	for k, w := range d.users {
+		total += int64(len(k))
+		total += int64(unsafe.Sizeof(w))
+		total += int64(len(w.user.ID))
+		total += int64(len(w.user.Name))
+		total += 8 // Age
+		total += int64(unsafe.Sizeof(w.updatedAt))
+	}
+	return items, total
 }
 
 func (d *Decorator) GetUserByID(ctx context.Context, id string) (*models.UserDTO, error) {
@@ -110,8 +128,7 @@ func (d *Decorator) CreateUser(ctx context.Context, user models.UserDTO) (string
 }
 
 func (d *Decorator) DeleteUserByID(ctx context.Context, id string) error {
-	err := d.userRepo.DeleteUserByID(ctx, id)
-	if err != nil {
+	if err := d.userRepo.DeleteUserByID(ctx, id); err != nil {
 		return errors.Wrap(err, "DeleteUser")
 	}
 
@@ -120,8 +137,7 @@ func (d *Decorator) DeleteUserByID(ctx context.Context, id string) error {
 }
 
 func (d *Decorator) UpdateUser(ctx context.Context, user models.UserDTO) error {
-	err := d.userRepo.UpdateUser(ctx, user)
-	if err != nil {
+	if err := d.userRepo.UpdateUser(ctx, user); err != nil {
 		return errors.Wrap(err, "UpdateUser")
 	}
 
