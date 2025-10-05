@@ -30,6 +30,10 @@ type Config struct {
 		Count     int
 		QueueSize int
 	}
+	Grafana struct {
+		User string
+		Pass string
+	}
 }
 
 //go:embed config.yaml

@@ -15,3 +15,7 @@ cache:
 workers:
     count: "2"
     queuesize: "64"    
+
+grafana:
+    user: "admin"
+    pass: "admin"
