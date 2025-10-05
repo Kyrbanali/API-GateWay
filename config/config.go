@@ -1,11 +1,12 @@
 package config
 
 import (
+	"bytes"
+	_ "embed"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -31,15 +32,15 @@ type Config struct {
 	}
 }
 
+//go:embed config.yaml
+var defaultYAMLConfig []byte
+
 func Load() (*Config, error) {
-	_ = godotenv.Load()
-
 	v := viper.New()
-	v.SetConfigFile("config/config.yaml")
-	v.SetConfigType("yaml")
 
-	if err := v.ReadInConfig(); err != nil {
-		return nil, errors.Wrap(err, "read config.yaml")
+	v.SetConfigType("yaml")
+	if err := v.ReadConfig(bytes.NewReader(defaultYAMLConfig)); err != nil {
+		return nil, errors.Wrap(err, "read embedded config")
 	}
 
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
