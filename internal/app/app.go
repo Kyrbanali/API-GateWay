@@ -18,11 +18,11 @@ func Run() error {
 		return errors.Wrap(err, "config load failed")
 	}
 
-	if err := database.Migrate(cfg.Postgres.BuildDSN()); err != nil {
+	if err := database.Migrate(cfg.BuildDSN()); err != nil {
 		return errors.Wrap(err, "migration")
 	}
 
-	conn, err := storage.GetConnect(cfg.Postgres.BuildDSN())
+	conn, err := storage.GetConnect(cfg.BuildDSN())
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to DB")
 	}

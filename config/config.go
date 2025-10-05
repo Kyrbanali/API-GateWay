@@ -11,32 +11,24 @@ import (
 )
 
 type Config struct {
-	App      AppConfig
-	Postgres PostgresConfig
-	Cache    CacheConfig
-	Workers  WorkersConfig
-}
-
-type AppConfig struct {
-	Port string
-}
-
-type PostgresConfig struct {
-	Host string
-	User string
-	Pass string
-	DB   string
-	Port string
-}
-
-type CacheConfig struct {
-	TTL             time.Duration
-	CleanupInterval time.Duration
-}
-
-type WorkersConfig struct {
-	Count     int
-	QueueSize int
+	App struct {
+		Port string
+	}
+	Postgres struct {
+		Host string
+		User string
+		Pass string
+		DB   string
+		Port string
+	}
+	Cache struct {
+		TTL             time.Duration
+		CleanupInterval time.Duration
+	}
+	Workers struct {
+		Count     int
+		QueueSize int
+	}
 }
 
 func Load() (*Config, error) {
@@ -61,12 +53,12 @@ func Load() (*Config, error) {
 	return &cfg, nil
 }
 
-func (p *PostgresConfig) BuildDSN() string {
+func (c *Config) BuildDSN() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		p.User,
-		p.Pass,
-		p.Host,
-		p.Port,
-		p.DB,
+		c.Postgres.User,
+		c.Postgres.Pass,
+		c.Postgres.Host,
+		c.Postgres.Port,
+		c.Postgres.DB,
 	)
 }
