@@ -1,6 +1,6 @@
 postgres:
     host: "postgressss"
-    pass: "postgressss"
+    pass: ""
     user: "postgressss"
     db: "postgressss"
     port: "5433"
