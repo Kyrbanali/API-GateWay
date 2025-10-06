@@ -14,9 +14,10 @@ import (
 
 type Decorator struct {
 	ttl      time.Duration
-	mu       sync.Mutex
-	users    map[string]WrapUser
 	userRepo repository.UserProvider
+
+	mu    sync.RWMutex
+	users map[string]WrapUser
 }
 
 type WrapUser struct {
@@ -25,8 +26,8 @@ type WrapUser struct {
 }
 
 func (d *Decorator) get(id string) (*models.UserDTO, bool) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	u, ok := d.users[id]
 	if ok {
 		return &u.user, true
@@ -56,12 +57,12 @@ func New(repo repository.UserProvider, ttl time.Duration, cleanupInterval time.D
 		users:    make(map[string]WrapUser),
 		userRepo: repo,
 	}
-	d.startEvictionLoop(cleanupInterval)
+	d.startCleanup(cleanupInterval)
 	metrics.SetCacheStats(0, 0)
 	return d
 }
 
-func (d *Decorator) startEvictionLoop(cleanupInterval time.Duration) {
+func (d *Decorator) startCleanup(cleanupInterval time.Duration) {
 	go func() {
 		t := time.NewTicker(cleanupInterval)
 		defer t.Stop()
