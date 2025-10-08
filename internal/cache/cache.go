@@ -16,7 +16,7 @@ type Decorator struct {
 	ttl      time.Duration
 	userRepo repository.UserProvider
 
-	mu    sync.RWMutex
+	rwmu  sync.RWMutex
 	users map[string]WrapUser
 }
 
@@ -26,8 +26,8 @@ type WrapUser struct {
 }
 
 func (d *Decorator) get(id string) (*models.UserDTO, bool) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
+	d.rwmu.RLock()
+	defer d.rwmu.RUnlock()
 	u, ok := d.users[id]
 	if ok {
 		return &u.user, true
@@ -36,18 +36,18 @@ func (d *Decorator) get(id string) (*models.UserDTO, bool) {
 }
 
 func (d *Decorator) set(id string, user models.UserDTO) {
-	d.mu.Lock()
+	d.rwmu.Lock()
 	d.users[id] = WrapUser{user: user, updatedAt: time.Now()}
 	items, bytes := d.sizeLocked()
-	d.mu.Unlock()
+	d.rwmu.Unlock()
 	metrics.SetCacheStats(items, bytes)
 }
 
 func (d *Decorator) delete(id string) {
-	d.mu.Lock()
+	d.rwmu.Lock()
 	delete(d.users, id)
 	items, bytes := d.sizeLocked()
-	d.mu.Unlock()
+	d.rwmu.Unlock()
 	metrics.SetCacheStats(items, bytes)
 }
 
@@ -67,14 +67,14 @@ func (d *Decorator) startCleanup(cleanupInterval time.Duration) {
 		t := time.NewTicker(cleanupInterval)
 		defer t.Stop()
 		for range t.C {
-			d.mu.Lock()
+			d.rwmu.Lock()
 			for id, entry := range d.users {
 				if time.Since(entry.updatedAt) > d.ttl {
 					delete(d.users, id)
 				}
 			}
 			items, bytes := d.sizeLocked()
-			d.mu.Unlock()
+			d.rwmu.Unlock()
 			metrics.SetCacheStats(items, bytes)
 		}
 	}()

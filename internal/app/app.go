@@ -15,7 +15,7 @@ import (
 func Run() error {
 	cfg, err := config.Load()
 	if err != nil {
-		return errors.Wrap(err, "config load failed")
+		return errors.Wrap(err, "config load")
 	}
 
 	if err := database.Migrate(cfg.BuildDSN()); err != nil {
@@ -24,17 +24,16 @@ func Run() error {
 
 	conn, err := storage.GetConnect(cfg.BuildDSN())
 	if err != nil {
-		return errors.Wrap(err, "failed to connect to DB")
+		return errors.Wrap(err, "connect to DB")
 	}
 	defer conn.Close()
 
 	repo := repository.New(conn)
 	cacheDecorator := cache.New(repo, cfg.Cache.TTL, cfg.Cache.CleanupInterval)
 
-	jobCh := make(chan worker.Job, cfg.Workers.QueueSize)
-	worker.LinkWorker(cfg.Workers.Count, jobCh, cacheDecorator)
+	work := worker.New(cfg.Workers.Count)
 
-	uc := usecase.New(cacheDecorator, jobCh)
+	uc := usecase.New(cacheDecorator, work)
 	handle := handler.New(uc)
 	router := GetRouter(handle)
 

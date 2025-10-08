@@ -1,72 +1,79 @@
 package worker
 
 import (
-	"fmt"
-	"log"
+	"context"
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/Kyrbanali/API-GateWay/internal/repository"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/pkg/errors"
 )
 
-type Job struct {
-	ID string
+type Task func(ctx context.Context) error
+
+type Worker struct {
+	jobs   chan Task
+	client *http.Client
 }
 
-func LinkWorker(workers int, jobs <-chan Job, userRepo repository.UserProvider) {
-	client := &http.Client{Timeout: 6 * time.Second}
+func New(workers int) *Worker {
+	w := &Worker{
+		jobs: make(chan Task, 100),
+		client: &http.Client{
+			Timeout: 6 * time.Second,
+		},
+	}
 
 	for i := 0; i < workers; i++ {
-		go func(idx int) {
-			for job := range jobs {
-				user, err := userRepo.GetUserByID(nil, job.ID)
-				if err != nil {
-					errors.Wrap(err, "LinkWorker")
-					continue
-				}
+		go w.worker()
+	}
+	return w
+}
 
-				links, err := getTop3(client, fmt.Sprintf("%s %d", user.Name, user.Age))
-				if err != nil {
-					errors.Wrap(err, "getTop3 LinkWorker")
-					continue
-				}
-
-				log.Printf("worker %d user (%s, %d) links %v", idx, user.Name, user.Age, links)
-			}
-		}(i)
+func (w *Worker) worker() {
+	for job := range w.jobs {
+		if err := job(context.Background()); err != nil {
+			errors.Wrap(err, "worker task")
+		}
 	}
 }
 
-func getTop3(client *http.Client, query string) ([]string, error) {
-	u := "https://yandex.ru/search/?text=" + url.QueryEscape(query)
+func (w *Worker) Push(ctx context.Context, task Task) {
+	go func() {
+		select {
+		case w.jobs <- task:
+		case <-ctx.Done():
+		}
+	}()
+}
 
-	req, err := http.NewRequest(http.MethodGet, u, nil)
+func (w *Worker) FetchLinks(query string, number int) ([]string, error) {
+	req, err := http.NewRequest(http.MethodGet, "https://yandex.ru/search/?text="+url.QueryEscape(query), nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "build req getTop3")
+		return nil, errors.Wrap(err, "build req fetchLinks")
 	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36")
 
-	resp, err := client.Do(req)
+	resp, err := w.client.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "http do getTop3")
+		return nil, errors.Wrap(err, "http do fetchLinks")
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "parse html getTop3")
+		return nil, errors.Wrap(err, "parse html fetchLinks")
 	}
 
 	var links []string
 
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
-		if len(links) >= 3 {
+		if len(links) >= number {
 			return
 		}
-		href, ok := s.Attr("href")
-		if ok && href != "" {
+
+		if href, ok := s.Attr("href"); ok && href != "" {
 			links = append(links, href)
 		}
 
