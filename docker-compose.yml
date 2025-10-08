@@ -49,6 +49,18 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
 
+  lint:
+    image: golangci/golangci-lint:v2.5.0
+    profiles: ["devtools"]            
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace                 
+      - gomodcache:/go/pkg/mod        
+      - gocache:/root/.cache          
+    command: golangci-lint run --timeout=3m ./...
+
 volumes:
   pgdata:
   grafana_data:
+  gomodcache:
+  gocache:

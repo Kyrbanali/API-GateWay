@@ -1,0 +1,42 @@
+version: "2"
+
+run:
+  tests: true
+
+linters:
+  enable:
+    - govet
+    - staticcheck   
+    - ineffassign
+    - errcheck
+    - revive
+    - gocyclo
+    - dupl
+    - prealloc
+    - nakedret
+    - misspell
+    - unused
+
+  disable:
+    - depguard
+    - wsl
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      extra-rules: true
+    goimports:
+      local-prefixes:
+        - github.com/Kyrbanali/API-GateWay
+
+issues:
+  exclude-dirs:
+    - vendor
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  sort-results: true

@@ -1,0 +1,29 @@
+name: lint
+on:
+  pull_request:
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".golangci.yml"
+      - "docker-compose.yml"
+  push:
+    branches: [ main, master, api ]
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".golangci.yml"
+      - "docker-compose.yml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Запускаем линтер через docker compose (образ тянется автоматически)
+      - name: Run golangci-lint via Docker Compose
+        run: |
+          docker compose --profile devtools pull lint || true
+          docker compose --profile devtools run --rm --no-deps -T lint

@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -54,7 +55,11 @@ func (w *Worker) FetchLinks(query string, number int) ([]string, error) {
 		return nil, errors.Wrap(err, "build req fetchLinks")
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "ru-RU,ru;q=0.9,en;q=0.8")
+	req.Header.Set("Referer", "https://ya.ru/")
 
+	log.Println("Final request URL:", req.URL.String())
 	resp, err := w.client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "http do fetchLinks")
