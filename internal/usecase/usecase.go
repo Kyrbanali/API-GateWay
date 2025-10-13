@@ -3,11 +3,12 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
 	"github.com/Kyrbanali/API-GateWay/internal/worker"
+	"github.com/pkg/errors"
 )
 
 type UseCase struct {
@@ -25,32 +26,21 @@ func (u *UseCase) CreateUser(ctx context.Context, user models.UserDTO) (string, 
 		return "", err
 	}
 
-	u.worker.Push(ctx, u.someJob(id))
+	u.worker.Push(ctx, u.userLinks(user))
 
 	return id, nil
 }
 
-func (u *UseCase) someJob(userID string) func(ctx context.Context) error {
+func (u *UseCase) userLinks(user models.UserDTO) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
-		if err := u.doSome(ctx, userID); err != nil {
-			return err
+		query := fmt.Sprintf("%s %d", user.Name, user.Age)
+		links, err := u.worker.FetchLinks(query, 3)
+		if err != nil {
+			return errors.Wrap(err, "")
 		}
+		slog.Debug("links for user %s (%s, %d): %v", user.ID, user.Name, user.Age, links)
 		return nil
 	}
-}
-
-func (u *UseCase) doSome(ctx context.Context, userID string) error {
-	user, err := u.userRepo.GetUserByID(ctx, userID)
-	if err != nil {
-		return err
-	}
-	query := fmt.Sprintf("%s %d", user.Name, user.Age)
-	links, err := u.worker.FetchLinks(query, 3)
-	if err != nil {
-		return err
-	}
-	log.Printf("links for user %s (%s, %d): %v", user.ID, user.Name, user.Age, links)
-	return err
 }
 
 func (u *UseCase) GetUserByID(ctx context.Context, id string) (*models.UserDTO, error) {
