@@ -1,11 +1,16 @@
-version: "2"
-
 run:
+  timeout: 5m
   tests: true
+
+output:
+  formats:
+    - format: colored-line-number
+      path: stdout
 
 linters:
   enable:
     - govet
+    - gosimple
     - staticcheck   
     - ineffassign
     - errcheck
@@ -21,22 +26,9 @@ linters:
     - depguard
     - wsl
 
-formatters:
-  enable:
-    - gofumpt
-    - goimports
-  settings:
-    gofumpt:
-      extra-rules: true
-    goimports:
-      local-prefixes:
-        - github.com/Kyrbanali/API-GateWay
+linters-settings:
+  gofmt:
+    simplify: true
 
 issues:
-  exclude-dirs:
-    - vendor
-  max-issues-per-linter: 0
-  max-same-issues: 0
-
-output:
-  sort-results: true
+  exclude-use-default: false
