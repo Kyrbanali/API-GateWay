@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -54,8 +55,8 @@ var (
 
 func register() {
 	once.Do(func() {
-		mustRegister(prometheus.NewGoCollector())
-		mustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+		mustRegister(collectors.NewGoCollector())
+		mustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 		mustRegister(httpRequestsTotal, httpInFlight, httpRequestDuration, cacheItems, cacheMemoryBytes)
 	})
 }
