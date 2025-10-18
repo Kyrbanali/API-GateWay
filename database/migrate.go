@@ -18,7 +18,11 @@ func Migrate(url string) error {
 	if err != nil {
 		return errors.Wrap(err, "cannot connect to db")
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			slog.Error("close db", slog.String("error", err.Error()))
+		}
+	}()
 
 	if err = db.Ping(); err != nil {
 		return errors.Wrap(err, "cannot ping db")

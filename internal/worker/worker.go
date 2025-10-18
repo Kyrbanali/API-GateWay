@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -35,7 +36,7 @@ func New(workers int) *Worker {
 func (w *Worker) worker() {
 	for job := range w.jobs {
 		if err := job(context.Background()); err != nil {
-			errors.Wrap(err, "worker task")
+			slog.Error("worker task", slog.String("error", err.Error()))
 		}
 	}
 }
@@ -64,7 +65,11 @@ func (w *Worker) FetchLinks(query string, number int) ([]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "http do fetchLinks")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			slog.Debug("close response body", slog.String("error", err.Error()))
+		}
+	}()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {

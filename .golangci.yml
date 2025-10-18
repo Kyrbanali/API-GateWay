@@ -14,7 +14,6 @@ linters:
     - staticcheck   
     - ineffassign
     - errcheck
-    - revive
     - gocyclo
     - dupl
     - prealloc

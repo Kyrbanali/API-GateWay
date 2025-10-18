@@ -38,7 +38,12 @@ func (u *UseCase) userLinks(user models.UserDTO) func(ctx context.Context) error
 		if err != nil {
 			return errors.Wrap(err, "")
 		}
-		slog.Debug("links for user %s (%s, %d): %v", user.ID, user.Name, user.Age, links)
+		slog.Debug("links for user",
+			slog.String("id", user.ID),
+			slog.String("name", user.Name),
+			slog.Int("age", user.Age),
+			slog.Any("links", links),
+		)
 		return nil
 	}
 }
