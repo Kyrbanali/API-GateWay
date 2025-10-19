@@ -5,18 +5,23 @@ import (
 	"log/slog"
 )
 
+type Config struct {
+	Count     int
+	QueueSize int
+}
+
 type Task func(ctx context.Context) error
 
 type Worker struct {
 	jobs chan Task
 }
 
-func New(workers int) *Worker {
+func New(cfg Config) *Worker {
 	w := &Worker{
-		jobs: make(chan Task, 100),
+		jobs: make(chan Task, cfg.QueueSize),
 	}
 
-	for i := 0; i < workers; i++ {
+	for i := 0; i < cfg.Count; i++ {
 		go w.worker()
 	}
 	return w

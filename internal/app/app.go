@@ -32,7 +32,7 @@ func Run() error {
 	repo := repository.New(conn)
 	cacheDecorator := cache.New(repo, cfg.Cache.TTL, cfg.Cache.CleanupInterval)
 
-	work := worker.New(cfg.Workers.Count)
+	work := worker.New(cfg.Workers)
 	fetcher := link.New()
 
 	uc := usecase.New(cacheDecorator, work, fetcher)

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Kyrbanali/API-GateWay/internal/worker"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -26,10 +27,8 @@ type Config struct {
 		TTL             time.Duration
 		CleanupInterval time.Duration
 	}
-	Workers struct {
-		Count     int
-		QueueSize int
-	}
+	Workers worker.Config
+
 	Grafana struct {
 		User string
 		Pass string
