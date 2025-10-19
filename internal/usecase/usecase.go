@@ -14,11 +14,11 @@ import (
 
 type UseCase struct {
 	userRepo repository.UserProvider
-	worker   *worker.Worker
+	worker   worker.WorkerProvider
 	fetcher  *link.Fetcher
 }
 
-func New(userRepo repository.UserProvider, worker *worker.Worker, fetcher *link.Fetcher) *UseCase {
+func New(userRepo repository.UserProvider, worker worker.WorkerProvider, fetcher *link.Fetcher) *UseCase {
 	return &UseCase{userRepo: userRepo, worker: worker, fetcher: fetcher}
 }
 
