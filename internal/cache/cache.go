@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 	"unsafe"
@@ -18,6 +19,8 @@ type Decorator struct {
 
 	mu    sync.RWMutex
 	users map[string]WrapUser
+
+	metrics metrics.CacheMetrics
 }
 
 type WrapUser struct {
@@ -39,16 +42,20 @@ func (d *Decorator) set(id string, user models.UserDTO) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.users[id] = WrapUser{user: user, updatedAt: time.Now()}
-	items, bytes := d.sizeLocked()
-	metrics.SetCacheStats(items, bytes)
+	d.updateMetrics()
 }
 
 func (d *Decorator) delete(id string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	delete(d.users, id)
+	d.updateMetrics()
+}
+
+func (d *Decorator) updateMetrics() {
 	items, bytes := d.sizeLocked()
-	metrics.SetCacheStats(items, bytes)
+	d.metrics.Items.Set(float64(items))
+	d.metrics.Bytes.Set(float64(bytes))
 }
 
 func New(repo repository.UserProvider, ttl time.Duration, cleanupInterval time.Duration) *Decorator {
@@ -57,8 +64,10 @@ func New(repo repository.UserProvider, ttl time.Duration, cleanupInterval time.D
 		users:    make(map[string]WrapUser),
 		userRepo: repo,
 	}
+	d.metrics = metrics.NewCache(fmt.Sprintf("users_cache_%p", d))
+	d.updateMetrics()
+
 	d.startCleanup(cleanupInterval)
-	metrics.SetCacheStats(0, 0)
 	return d
 }
 
@@ -73,9 +82,8 @@ func (d *Decorator) startCleanup(cleanupInterval time.Duration) {
 					delete(d.users, id)
 				}
 			}
-			items, bytes := d.sizeLocked()
+			d.updateMetrics()
 			d.mu.Unlock()
-			metrics.SetCacheStats(items, bytes)
 		}
 	}()
 }

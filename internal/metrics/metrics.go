@@ -32,26 +32,35 @@ var (
 		},
 		[]string{"method", "path", "status"},
 	)
-
-	CacheItems = prometheus.NewGauge(
-		prometheus.GaugeOpts{
-			Name: "cache_items",
-			Help: "Number of items in the cache.",
-		},
-	)
-	CacheMemoryBytes = prometheus.NewGauge(
-		prometheus.GaugeOpts{
-			Name: "cache_memory_bytes",
-			Help: "Approximate memory used by the cache in bytes.",
-		},
-	)
 )
+
+type CacheMetrics struct {
+	Items prometheus.Gauge
+	Bytes prometheus.Gauge
+}
+
+func NewCache(cacheName string) CacheMetrics {
+	labels := prometheus.Labels{"cache": cacheName}
+
+	items := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:        "cache_items",
+		Help:        "Number of items in the cache.",
+		ConstLabels: labels,
+	})
+	bytes := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:        "cache_memory_bytes",
+		Help:        "Approximate memory used by the cache in bytes.",
+		ConstLabels: labels,
+	})
+	mustRegister(items, bytes)
+	return CacheMetrics{Items: items, Bytes: bytes}
+}
 
 func Register() {
 	mustRegister(
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-		HttpRequestsTotal, HttpInFlight, HttpRequestDuration, CacheItems, CacheMemoryBytes,
+		HttpRequestsTotal, HttpInFlight, HttpRequestDuration,
 	)
 }
 
@@ -69,10 +78,4 @@ func mustRegister(cs ...prometheus.Collector) {
 func Handler() fiber.Handler {
 	Register()
 	return adaptor.HTTPHandler(promhttp.Handler())
-}
-
-func SetCacheStats(items int, bytes int64) {
-	Register()
-	CacheItems.Set(float64(items))
-	CacheMemoryBytes.Set(float64(bytes))
 }
