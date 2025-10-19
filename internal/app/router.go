@@ -1,6 +1,7 @@
 package app
 
 import (
+	middleware "github.com/Kyrbanali/API-GateWay/internal/app/middlware"
 	"github.com/Kyrbanali/API-GateWay/internal/handler"
 	"github.com/Kyrbanali/API-GateWay/internal/metrics"
 	"github.com/gofiber/fiber/v2"
@@ -9,7 +10,7 @@ import (
 func GetRouter(h *handler.Handle) *fiber.App {
 	app := fiber.New()
 
-	app.Use(metrics.Middleware())
+	app.Use(middleware.Metrics())
 	app.Get("/metrics", metrics.Handler())
 
 	app.Post("/user", h.CreateUser)
