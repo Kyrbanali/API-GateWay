@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/Kyrbanali/API-GateWay/internal/link"
 	"github.com/Kyrbanali/API-GateWay/internal/models"
 	"github.com/Kyrbanali/API-GateWay/internal/repository"
 	"github.com/Kyrbanali/API-GateWay/internal/worker"
@@ -14,10 +15,11 @@ import (
 type UseCase struct {
 	userRepo repository.UserProvider
 	worker   *worker.Worker
+	fetcher  *link.Fetcher
 }
 
-func New(userRepo repository.UserProvider, worker *worker.Worker) *UseCase {
-	return &UseCase{userRepo: userRepo, worker: worker}
+func New(userRepo repository.UserProvider, worker *worker.Worker, fetcher *link.Fetcher) *UseCase {
+	return &UseCase{userRepo: userRepo, worker: worker, fetcher: fetcher}
 }
 
 func (u *UseCase) CreateUser(ctx context.Context, user models.UserDTO) (string, error) {
@@ -34,7 +36,7 @@ func (u *UseCase) CreateUser(ctx context.Context, user models.UserDTO) (string, 
 func (u *UseCase) userLinks(user models.UserDTO) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 		query := fmt.Sprintf("%s %d", user.Name, user.Age)
-		links, err := u.worker.FetchLinks(query, 3)
+		links, err := u.fetcher.FetchLinks(query, 3)
 		if err != nil {
 			return errors.Wrap(err, "")
 		}
