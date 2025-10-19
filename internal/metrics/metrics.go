@@ -1,8 +1,6 @@
 package metrics
 
 import (
-	"sync"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,8 +9,6 @@ import (
 )
 
 var (
-	once sync.Once
-
 	HttpRequestsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_requests_total",
@@ -52,11 +48,11 @@ var (
 )
 
 func Register() {
-	once.Do(func() {
-		mustRegister(collectors.NewGoCollector())
-		mustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
-		mustRegister(HttpRequestsTotal, HttpInFlight, HttpRequestDuration, CacheItems, CacheMemoryBytes)
-	})
+	mustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+		HttpRequestsTotal, HttpInFlight, HttpRequestDuration, CacheItems, CacheMemoryBytes,
+	)
 }
 
 func mustRegister(cs ...prometheus.Collector) {
