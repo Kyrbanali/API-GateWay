@@ -1,0 +1,21 @@
+postgres:
+    host: "postgressss"
+    pass: ""
+    user: "postgressss"
+    db: "postgressss"
+    port: "5433"
+
+app:
+    port: "3000"
+
+cache:
+    ttl: "10s"
+    cleanupinterval: "5s"
+
+workers:
+    count: "2"
+    queuesize: "64"    
+
+grafana:
+    user: "admin"
+    pass: ""

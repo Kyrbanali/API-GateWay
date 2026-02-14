@@ -1,0 +1,157 @@
+package handler
+
+import (
+	"errors"
+	"strings"
+
+	"github.com/Kyrbanali/API-GateWay/internal/apperr"
+	"github.com/Kyrbanali/API-GateWay/internal/models"
+	"github.com/Kyrbanali/API-GateWay/internal/usecase"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+)
+
+type Handle struct {
+	uc usecase.UserProvider
+}
+
+var validate = validator.New()
+
+func New(uc *usecase.UseCase) *Handle {
+	return &Handle{uc: uc}
+}
+
+func (h *Handle) CreateUser(c *fiber.Ctx) error {
+	var req models.CreateUserRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "parse json",
+		})
+	}
+
+	if err := validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "validation",
+			"details": err,
+		})
+	}
+	user := req.ToUserDTOFromCreate()
+
+	id, err := h.uc.CreateUser(c.Context(), user)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "CreateUser",
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(models.CreateUserResponse{ID: id})
+}
+
+func (h *Handle) GetUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid uuid",
+		})
+	}
+
+	user, err := h.uc.GetUserByID(c.Context(), id)
+	if err != nil {
+		if errors.Is(err, apperr.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "querying user",
+			"details": err.Error(),
+		})
+	}
+
+	return c.JSON(user)
+}
+
+func (h *Handle) GetAllUsers(c *fiber.Ctx) error {
+	users, err := h.uc.GetAllUsers(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "fetch users",
+			"details": err.Error(),
+		})
+	}
+
+	return c.JSON(users)
+}
+
+func (h *Handle) DeleteUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	if _, err := uuid.Parse(id); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid uuid",
+		})
+	}
+
+	err := h.uc.DeleteUserByID(c.Context(), id)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "delete user",
+			"details": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "user deleted",
+	})
+}
+
+func (h *Handle) UpdateUser(c *fiber.Ctx) error {
+	var req models.UpdateUserRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "parse Json",
+		})
+	}
+
+	if err := validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "validation",
+			"details": err,
+		})
+	}
+
+	if _, err := uuid.Parse(req.ID); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid UUID",
+		})
+	}
+
+	user := req.ToUserDTOFromUpdate()
+
+	err := h.uc.UpdateUser(c.Context(), user)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "update user",
+			"details": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"id": user.ID,
+	})
+}

@@ -1,0 +1,33 @@
+run:
+  timeout: 5m
+  tests: true
+
+output:
+  formats:
+    - format: colored-line-number
+      path: stdout
+
+linters:
+  enable:
+    - govet
+    - gosimple
+    - staticcheck   
+    - ineffassign
+    - errcheck
+    - gocyclo
+    - dupl
+    - prealloc
+    - nakedret
+    - misspell
+    - unused
+
+  disable:
+    - depguard
+    - wsl
+
+linters-settings:
+  gofmt:
+    simplify: true
+
+issues:
+  exclude-use-default: false
