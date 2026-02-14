@@ -13,6 +13,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+type Config struct {
+	TTL             time.Duration
+	CleanupInterval time.Duration
+}
+
 type Decorator struct {
 	ttl      time.Duration
 	userRepo repository.UserProvider
@@ -58,16 +63,16 @@ func (d *Decorator) updateMetrics() {
 	d.metrics.Bytes.Set(float64(bytes))
 }
 
-func New(repo repository.UserProvider, ttl time.Duration, cleanupInterval time.Duration) *Decorator {
+func New(repo repository.UserProvider, cfg Config) *Decorator {
 	d := &Decorator{
-		ttl:      ttl,
+		ttl:      cfg.TTL,
 		users:    make(map[string]WrapUser),
 		userRepo: repo,
 	}
 	d.metrics = metrics.NewCache(fmt.Sprintf("users_cache_%p", d))
 	d.updateMetrics()
 
-	d.startCleanup(cleanupInterval)
+	d.startCleanup(cfg.CleanupInterval)
 	return d
 }
 

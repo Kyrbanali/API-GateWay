@@ -3,10 +3,10 @@ package config
 import (
 	"bytes"
 	_ "embed"
-	"fmt"
 	"strings"
-	"time"
 
+	"github.com/Kyrbanali/API-GateWay/internal/cache"
+	"github.com/Kyrbanali/API-GateWay/internal/storage"
 	"github.com/Kyrbanali/API-GateWay/internal/worker"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -16,18 +16,10 @@ type Config struct {
 	App struct {
 		Port string
 	}
-	Postgres struct {
-		Host string
-		User string
-		Pass string
-		DB   string
-		Port string
-	}
-	Cache struct {
-		TTL             time.Duration
-		CleanupInterval time.Duration
-	}
-	Workers worker.Config
+
+	Postgres storage.Config
+	Cache    cache.Config
+	Workers  worker.Config
 
 	Grafana struct {
 		User string
@@ -55,14 +47,4 @@ func Load() (*Config, error) {
 	}
 
 	return &cfg, nil
-}
-
-func (c *Config) BuildDSN() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		c.Postgres.User,
-		c.Postgres.Pass,
-		c.Postgres.Host,
-		c.Postgres.Port,
-		c.Postgres.DB,
-	)
 }

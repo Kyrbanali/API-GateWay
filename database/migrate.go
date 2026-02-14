@@ -24,12 +24,12 @@ func Migrate(url string) error {
 		}
 	}()
 
-	if err = db.Ping(); err != nil {
+	if err := db.Ping(); err != nil {
 		return errors.Wrap(err, "cannot ping db")
 	}
 
 	goose.SetBaseFS(migrations)
-	if err = goose.SetDialect("postgres"); err != nil {
+	if err := goose.SetDialect("postgres"); err != nil {
 		return errors.Wrap(err, "cannot set migrations dialect")
 	}
 

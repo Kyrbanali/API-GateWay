@@ -19,18 +19,18 @@ func Run() error {
 		return errors.Wrap(err, "config load")
 	}
 
-	if err := database.Migrate(cfg.BuildDSN()); err != nil {
+	if err := database.Migrate(cfg.Postgres.BuildDSN()); err != nil {
 		return errors.Wrap(err, "migration")
 	}
 
-	conn, err := storage.GetConnect(cfg.BuildDSN())
+	conn, err := storage.GetConnect(cfg.Postgres.BuildDSN())
 	if err != nil {
 		return errors.Wrap(err, "connect to DB")
 	}
 	defer conn.Close()
 
 	repo := repository.New(conn)
-	cacheDecorator := cache.New(repo, cfg.Cache.TTL, cfg.Cache.CleanupInterval)
+	cacheDecorator := cache.New(repo, cfg.Cache)
 
 	work := worker.New(cfg.Workers)
 	fetcher := link.New()
